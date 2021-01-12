@@ -119,6 +119,10 @@ class ReportAgedPartnerBalance(models.AbstractModel):
                             FROM account_analytic_tag_account_move_line_rel
                             WHERE account_analytic_tag_id IN ({analytic_tags})) '''
 
+        if ctx.get('account_accounts', []):
+            account_accounts = ",".join([str(id) for id in ctx.get("account_accounts")])
+            analytic_query += f' AND l.account_id IN ({account_accounts})'
+
         # Use one query per period and store results in history (a list variable)
         # Each history will contain: history[1] = {'<partner_id>': <partner_debit-credit>}
         history = []

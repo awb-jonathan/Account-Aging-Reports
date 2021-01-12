@@ -12,10 +12,24 @@ class report_account_aged_partner(models.AbstractModel):
     filter_analytic = True
 
     def _get_options(self, previous_options=None):
+        _logger.debug(f'Prev Options: {previous_options}')
         options = super(report_account_aged_partner, self)._get_options(previous_options)
-        if 'account_accounts' not in options.keys():
+        if 'account_accounts' not in previous_options.keys():
             options['account_accounts'] = []
+
+        if options.get('account_accounts') is not None:
+            options['selected_account_accounts_names'] = [self.env['account.account'].browse(int(account)).name for account in options['account_accounts']]
         return options
+
+    @api.model
+    def _init_filter_analytic(self, options, previous_options=None):
+        super()._init_filter_analytic(options, previous_options)
+        options['account_accounts'] = previous_options and previous_options.get('account_accounts') or []
+        account_account_ids = [int(tag) for tag in options['account_accounts']]
+        selected_account_accounts = account_account_ids \
+                                    and self.env['account.account'].browse(account_account_ids) \
+                                    or self.env['account.account']
+        options['selected_account_account_names'] = selected_account_accounts.mapped('name')
 
     @api.model
     def _get_lines(self, options, line_id=None):
@@ -46,7 +60,7 @@ class report_account_aged_partner(models.AbstractModel):
                 context.update(analytic_tags=analytic_tags)
 
             if len(accounts):
-                context.update(accounts=accounts)
+                context.update(account_accounts=accounts)
 
             results, total, amls = self.env['report.account.report_agedpartnerbalance_account'].with_context(**context)._get_partner_move_lines(account_types, self._context['date_to'], 'posted', 30)
         else:

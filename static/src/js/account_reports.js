@@ -11,7 +11,7 @@ var QWeb = core.qweb;
 var _t = core._t;
 
 // INHERITED FROM account_reports.account_report
-var M2MFilters = Widget.extend(StandaloneFieldManagerMixin, {
+var M2MFilters2 = Widget.extend(StandaloneFieldManagerMixin, {
     /**
      * @constructor
      * @param {Object} fields
@@ -109,12 +109,25 @@ var M2MFilters = Widget.extend(StandaloneFieldManagerMixin, {
 });
 
 var accountReportsWidgetFilter = accountReportsWidget.include({
+  custom_events: {
+      'value_changed': function(ev) {
+          console.log(ev);
+          var self = this;
+          self.report_options.partner_ids = ev.data.partner_ids;
+          self.report_options.partner_categories = ev.data.partner_categories;
+          self.report_options.analytic_accounts = ev.data.analytic_accounts;
+          self.report_options.analytic_tags = ev.data.analytic_tags;
+          self.report_options.account_accounts = ev.data.account_accounts;
+          return self.reload().then(function () {
+              self.$searchview_buttons.find('.account_partner_filter').click();
+              self.$searchview_buttons.find('.account_analytic_filter').click();
+          });
+       },
+  },
   render_searchview_buttons: function (){
     this._super.apply(this, arguments);
-    console.log('Extending Reports Filters');
     if (this.report_options.analytic) {
       if (!this.AnalyticFilters) {
-        console.log('Creating Analytic Filters');
         var fields = {};
         if (this.report_options.analytic_accounts) {
             fields['analytic_accounts'] = {
@@ -138,12 +151,10 @@ var accountReportsWidgetFilter = accountReportsWidget.include({
             };
         }
         if (!_.isEmpty(fields)) {
-            this.AnalyticFilters = new M2MFilters(this, fields);
+            this.AnalyticFilters = new M2MFilters2(this, fields);
             this.AnalyticFilters.appendTo(this.$searchview_buttons.find('.js_account_analytic_m2m'));
         }
       } else {
-        console.log('Appending Analytic Filters');
-        console.log(this.AnalyticFilters.$el);
         this.$searchview_buttons.find('.js_account_analytic_m2m').append(this.AnalyticFilters.$el);
       }
     }
